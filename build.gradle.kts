@@ -1,7 +1,8 @@
 plugins {
-    id("java")
     id("com.diffplug.spotless") version "6.25.0"
+    id("java")
 }
+apply(from = "spikedev.gradle.kts")
 
 group = "diruptio"
 version = "0.0.1"
@@ -31,6 +32,10 @@ spotless {
     }
 }
 
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(17)
+}
+
 tasks {
     compileJava {
         options.encoding = "UTF-8"
@@ -38,6 +43,6 @@ tasks {
     }
 
     jar {
-        archiveBaseName = "Dynamite"
+        archiveFileName = "Dynamite.jar"
     }
 }
