@@ -16,6 +16,21 @@ dependencies {
     compileOnly("org.jetbrains:annotations:24.1.0")
 }
 
+spotless {
+    kotlinGradle {
+        target("**/*.gradle.kts")
+        ktlint()
+        endWithNewline()
+    }
+    java {
+        target("**/src/**/*.java")
+        googleJavaFormat().aosp()
+        removeUnusedImports()
+        indentWithSpaces()
+        endWithNewline()
+    }
+}
+
 tasks {
     compileJava {
         options.encoding = "UTF-8"
