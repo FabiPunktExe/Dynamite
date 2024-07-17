@@ -6,10 +6,11 @@ import diruptio.spikedog.Spikedog;
 import diruptio.spikedog.config.Config;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Objects;
 import org.jetbrains.annotations.NotNull;
 
 public class Dynamite implements Listener {
-    private static String projectsPath;
+    private static Path projectsPath;
     private static List<String> projects;
 
     @Override
@@ -17,10 +18,10 @@ public class Dynamite implements Listener {
         Path configFile = self.file().resolveSibling("Dynamite").resolve("config.yml");
         Config config = new Config(configFile, Config.Type.YAML);
         if (!config.contains("projects_path")) {
-            config.set("projects_path", "/projects");
+            config.set("projects_path", "projects");
             config.save();
         }
-        projectsPath = config.getString("projects_path");
+        projectsPath = Path.of(Objects.requireNonNull(config.getString("projects_path")));
         if (!config.contains("projects")) {
             config.set("projects", List.of());
             config.save();
@@ -28,9 +29,10 @@ public class Dynamite implements Listener {
         projects = config.getList("projects", List.of());
 
         Spikedog.addServlet("/projects", new ProjectsServlet());
+        Spikedog.addServlet("/project", new ProjectServlet());
     }
 
-    public static @NotNull String getProjectsPath() {
+    public static @NotNull Path getProjectsPath() {
         return projectsPath;
     }
 
