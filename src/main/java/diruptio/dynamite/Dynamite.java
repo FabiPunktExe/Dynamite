@@ -1,13 +1,18 @@
 package diruptio.dynamite;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonStreamParser;
 import diruptio.dynamite.project.DownloadServlet;
 import diruptio.spikedog.Listener;
 import diruptio.spikedog.Module;
 import diruptio.spikedog.Spikedog;
 import diruptio.spikedog.config.Config;
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -17,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class Dynamite implements Listener {
     private static Path projectsPath;
-    private static List<String> projects;
+    private static final List<Project> projects = new ArrayList<>();
 
     @Override
     public void onLoad(@NotNull Module self) {
@@ -28,22 +33,41 @@ public class Dynamite implements Listener {
             config.save();
         }
         projectsPath = Path.of(Objects.requireNonNull(config.getString("projects_path")));
-        if (!config.contains("projects")) {
-            config.set("projects", List.of());
-            config.save();
-        }
-        projects = config.getList("projects", List.of());
+
+        loadProjects(projectsPath);
 
         Spikedog.addServlet("/projects", new ProjectsServlet());
         Spikedog.addServlet("/project", new ProjectServlet());
         Spikedog.addServlet("/project/download", new DownloadServlet());
     }
 
+    private void loadProjects(@NotNull Path path) {
+        try {
+            projects.clear();
+            Path projectsFile = path.resolve("projects.json");
+            if (!Files.exists(projectsFile)) {
+                Files.write(projectsFile, "[]".getBytes(), StandardOpenOption.CREATE_NEW);
+                return;
+            }
+            BufferedReader reader = Files.newBufferedReader(projectsFile);
+            JsonStreamParser parser = new JsonStreamParser(reader);
+            JsonArray json = parser.next().getAsJsonArray();
+            reader.close();
+            for (JsonElement project : json) {
+                if (project.isJsonObject()) {
+                    Dynamite.projects.add(Project.fromJson(project.getAsJsonObject()));
+                }
+            }
+        } catch (IOException exception) {
+            exception.printStackTrace(System.err);
+        }
+    }
+
     public static @NotNull Path getProjectsPath() {
         return projectsPath;
     }
 
-    public static @NotNull List<String> getProjects() {
+    public static @NotNull List<Project> getProjects() {
         return projects;
     }
 

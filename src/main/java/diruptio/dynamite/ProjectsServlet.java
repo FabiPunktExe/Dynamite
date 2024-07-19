@@ -12,7 +12,7 @@ public class ProjectsServlet implements BiConsumer<HttpRequest, HttpResponse> {
         response.setHeader("Content-Type", "application/json");
         JsonObject content = new JsonObject();
         JsonArray projects = new JsonArray();
-        Dynamite.getProjects().forEach(projects::add);
+        Dynamite.getProjects().forEach(project -> projects.add(project.name()));
         content.add("projects", projects);
         response.setContent(content.toString());
     }
