@@ -2,8 +2,10 @@ package diruptio.dynamite;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonStreamParser;
-import diruptio.dynamite.project.DownloadServlet;
+import diruptio.dynamite.project.CreateServlet;
+import diruptio.dynamite.project.version.DownloadServlet;
 import diruptio.spikedog.Listener;
 import diruptio.spikedog.Module;
 import diruptio.spikedog.Spikedog;
@@ -21,13 +23,18 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class Dynamite implements Listener {
+    private static Config config;
     private static Path projectsPath;
-    private static final List<Project> projects = new ArrayList<>();
+    private static final @NotNull List<Project> projects = new ArrayList<>();
 
     @Override
     public void onLoad(@NotNull Module self) {
         Path configFile = self.file().resolveSibling("Dynamite").resolve("config.yml");
-        Config config = new Config(configFile, Config.Type.YAML);
+        config = new Config(configFile, Config.Type.YAML);
+        if (!config.contains("password")) {
+            config.set("password", "YOUR_PASSWORD");
+            config.save();
+        }
         if (!config.contains("projects_path")) {
             config.set("projects_path", "projects");
             config.save();
@@ -38,6 +45,7 @@ public class Dynamite implements Listener {
 
         Spikedog.addServlet("/projects", new ProjectsServlet());
         Spikedog.addServlet("/project", new ProjectServlet());
+        Spikedog.addServlet("/project/create", new CreateServlet());
         Spikedog.addServlet("/project/download", new DownloadServlet());
     }
 
@@ -46,7 +54,10 @@ public class Dynamite implements Listener {
             projects.clear();
             Path projectsFile = path.resolve("projects.json");
             if (!Files.exists(projectsFile)) {
-                Files.write(projectsFile, "[]".getBytes(), StandardOpenOption.CREATE_NEW);
+                Files.write(
+                        projectsFile,
+                        new JsonObject().toString().getBytes(),
+                        StandardOpenOption.CREATE_NEW);
                 return;
             }
             BufferedReader reader = Files.newBufferedReader(projectsFile);
@@ -61,6 +72,10 @@ public class Dynamite implements Listener {
         } catch (IOException exception) {
             exception.printStackTrace(System.err);
         }
+    }
+
+    public static @NotNull Config getConfig() {
+        return config;
     }
 
     public static @NotNull Path getProjectsPath() {
@@ -100,6 +115,26 @@ public class Dynamite implements Listener {
             return downloads;
         } catch (IOException e) {
             return null;
+        }
+    }
+
+    public static void save() {
+        try {
+            Path projectsFile = projectsPath.resolve("projects.json");
+            Files.write(projectsFile, projects.toString().getBytes(), StandardOpenOption.CREATE);
+            for (Project project : projects) {
+                Path projectPath = projectsPath.resolve(project.name());
+                if (!Files.exists(projectPath)) {
+                    Files.createDirectories(projectPath);
+                }
+                Path projectFile = projectPath.resolve("project.json");
+                Files.write(
+                        projectFile,
+                        project.toJson().toString().getBytes(),
+                        StandardOpenOption.CREATE);
+            }
+        } catch (IOException exception) {
+            exception.printStackTrace(System.err);
         }
     }
 }

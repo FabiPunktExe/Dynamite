@@ -1,14 +1,16 @@
-package diruptio.dynamite.project;
+package diruptio.dynamite.project.version;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import diruptio.dynamite.Dynamite;
+import diruptio.dynamite.Project;
 import diruptio.spikedog.HttpRequest;
 import diruptio.spikedog.HttpResponse;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.BiConsumer;
 
 public class DownloadServlet implements BiConsumer<HttpRequest, HttpResponse> {
@@ -16,8 +18,8 @@ public class DownloadServlet implements BiConsumer<HttpRequest, HttpResponse> {
         response.setHeader("Content-Type", "application/json");
 
         // Get project parameter
-        String project = request.getParameter("project");
-        if (project == null) {
+        String projectParam = request.getParameter("project");
+        if (projectParam == null) {
             response.setStatus(400, "Bad Request");
             JsonObject content = new JsonObject();
             content.addProperty("error", "Parameter 'project' was not provided");
@@ -26,28 +28,36 @@ public class DownloadServlet implements BiConsumer<HttpRequest, HttpResponse> {
         }
 
         // Check if project exists
-        if (!Dynamite.getProjects().contains(project)) {
+        Optional<Project> project =
+                Dynamite.getProjects().stream()
+                        .filter(project2 -> project2.name().equals(projectParam))
+                        .findFirst();
+        if (project.isEmpty()) {
             response.setStatus(404, "Not Found");
             JsonObject content = new JsonObject();
             content.addProperty("error", "Project not found");
             response.setContent(content.toString());
             return;
         }
-        Path projectPath = Dynamite.getProjectsPath().resolve(project);
+        Path projectPath = Dynamite.getProjectsPath().resolve(projectParam);
 
         // Get version parameter
-        String version = request.getParameter("version");
-        if (version == null) {
+        String versionParam = request.getParameter("version");
+        if (versionParam == null) {
             response.setStatus(400, "Bad Request");
             JsonObject content = new JsonObject();
             content.addProperty("error", "Parameter 'version' was not provided");
             response.setContent(content.toString());
             return;
         }
-        Path versionPath = projectPath.resolve(version);
+        Path versionPath = projectPath.resolve(versionParam);
 
         // Check if version exists
-        if (!Files.exists(versionPath)) {
+        Optional<Project.Version> version =
+                project.get().versions().stream()
+                        .filter(version2 -> version2.name().equals(versionParam))
+                        .findFirst();
+        if (version.isEmpty()) {
             response.setStatus(404, "Not Found");
             JsonObject content = new JsonObject();
             content.addProperty("error", "Version not found");
@@ -56,7 +66,7 @@ public class DownloadServlet implements BiConsumer<HttpRequest, HttpResponse> {
         }
 
         // Get downloads
-        List<String> downloads = Dynamite.getDownloads(project, version);
+        List<String> downloads = Dynamite.getDownloads(projectParam, versionParam);
         if (downloads == null) {
             response.setStatus(500, "Internal Server Error");
             JsonObject content = new JsonObject();
