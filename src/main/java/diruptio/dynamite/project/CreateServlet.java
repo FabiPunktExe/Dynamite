@@ -12,6 +12,8 @@ import java.util.function.BiConsumer;
 
 public class CreateServlet implements BiConsumer<HttpRequest, HttpResponse> {
     public void accept(HttpRequest request, HttpResponse response) {
+        response.setHeader("Content-Type", "application/json");
+
         // Authorization
         String password = ":" + Dynamite.getConfig().getString("password");
         byte[] bytes = password.getBytes(StandardCharsets.UTF_8);
@@ -20,7 +22,6 @@ public class CreateServlet implements BiConsumer<HttpRequest, HttpResponse> {
         if (!auth.equals(request.getHeader("Authorization"))) {
             // Unauthorized
             response.setStatus(401, "Unauthorized");
-            response.setHeader("Content-Type", "text/html");
             response.setHeader("WWW-Authenticate", "Basic charset=\"UTF-8\"");
             JsonObject content = new JsonObject();
             content.addProperty("error", "Unauthorized");
@@ -47,6 +48,7 @@ public class CreateServlet implements BiConsumer<HttpRequest, HttpResponse> {
         } else {
             Dynamite.getProjects().add(new Project(projectParam, new ArrayList<>()));
             Dynamite.save();
+            Dynamite.getLogger().info("Created project: " + projectParam);
         }
 
         // Success

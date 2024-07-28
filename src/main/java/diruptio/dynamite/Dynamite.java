@@ -18,11 +18,14 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Stream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class Dynamite implements Listener {
+    private static final @NotNull Logger logger = Logger.getLogger("Dynamite");
     private static Config config;
     private static Path projectsPath;
     private static final @NotNull List<Project> projects = new ArrayList<>();
@@ -66,12 +69,18 @@ public class Dynamite implements Listener {
             reader.close();
             for (JsonElement project : json) {
                 if (project.isJsonObject()) {
-                    Dynamite.projects.add(Project.fromJson(project.getAsJsonObject()));
+                    projects.add(Project.fromJson(project.getAsJsonObject()));
+                } else {
+                    logger.warning("Invalid project: " + project);
                 }
             }
         } catch (IOException exception) {
-            exception.printStackTrace(System.err);
+            logger.log(Level.SEVERE, "Failed to load projects", exception);
         }
+    }
+
+    public static @NotNull Logger getLogger() {
+        return logger;
     }
 
     public static @NotNull Config getConfig() {
@@ -84,21 +93,6 @@ public class Dynamite implements Listener {
 
     public static @NotNull List<Project> getProjects() {
         return projects;
-    }
-
-    public static @Nullable List<String> getVersions(@NotNull String project) {
-        try (Stream<Path> children = Files.list(Dynamite.getProjectsPath().resolve(project))) {
-            List<String> versions = new ArrayList<>();
-            for (Path child : children.toList()) {
-                if (Files.isDirectory(child)) {
-                    versions.add(child.getFileName().toString());
-                }
-            }
-            versions.sort(String::compareTo);
-            return versions;
-        } catch (IOException e) {
-            return null;
-        }
     }
 
     public static @Nullable List<String> getDownloads(
