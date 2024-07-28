@@ -12,8 +12,9 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.BiConsumer;
+import java.util.logging.Level;
 
-public class DownloadServlet implements BiConsumer<HttpRequest, HttpResponse> {
+public class VersionDownloadServlet implements BiConsumer<HttpRequest, HttpResponse> {
     public void accept(HttpRequest request, HttpResponse response) {
         response.setHeader("Content-Type", "application/json");
 
@@ -109,7 +110,8 @@ public class DownloadServlet implements BiConsumer<HttpRequest, HttpResponse> {
         String fileContent;
         try {
             fileContent = new String(Files.readAllBytes(versionPath.resolve(download)));
-        } catch (IOException ignored) {
+        } catch (IOException exception) {
+            Dynamite.getLogger().log(Level.SEVERE, "Failed to read download file", exception);
             response.setStatus(500, "Internal Server Error");
             JsonObject content = new JsonObject();
             content.addProperty("error", "An internal error occurred");

@@ -5,7 +5,8 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonStreamParser;
 import diruptio.dynamite.project.CreateServlet;
-import diruptio.dynamite.project.version.DownloadServlet;
+import diruptio.dynamite.project.version.VerisonCreateServlet;
+import diruptio.dynamite.project.version.VersionDownloadServlet;
 import diruptio.spikedog.Listener;
 import diruptio.spikedog.Module;
 import diruptio.spikedog.Spikedog;
@@ -49,7 +50,8 @@ public class Dynamite implements Listener {
         Spikedog.addServlet("/projects", new ProjectsServlet());
         Spikedog.addServlet("/project", new ProjectServlet());
         Spikedog.addServlet("/project/create", new CreateServlet());
-        Spikedog.addServlet("/project/download", new DownloadServlet());
+        Spikedog.addServlet("/project/version/create", new VerisonCreateServlet());
+        Spikedog.addServlet("/project/version/download", new VersionDownloadServlet());
     }
 
     private void loadProjects(@NotNull Path path) {
