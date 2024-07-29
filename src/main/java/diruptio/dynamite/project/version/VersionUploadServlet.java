@@ -5,13 +5,17 @@ import diruptio.dynamite.Dynamite;
 import diruptio.dynamite.Project;
 import diruptio.spikedog.HttpRequest;
 import diruptio.spikedog.HttpResponse;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.Base64;
-import java.util.List;
 import java.util.Optional;
 import java.util.function.BiConsumer;
+import java.util.logging.Level;
 
-public class VerisonCreateServlet implements BiConsumer<HttpRequest, HttpResponse> {
+public class VersionUploadServlet implements BiConsumer<HttpRequest, HttpResponse> {
     public void accept(HttpRequest request, HttpResponse response) {
         response.setHeader("Content-Type", "application/json");
 
@@ -32,6 +36,7 @@ public class VerisonCreateServlet implements BiConsumer<HttpRequest, HttpRespons
         }
 
         // Get project parameter
+        System.out.println(request.getParameters());
         String projectParam = request.getParameter("project");
         if (projectParam == null) {
             response.setStatus(400, "Bad Request");
@@ -53,6 +58,7 @@ public class VerisonCreateServlet implements BiConsumer<HttpRequest, HttpRespons
             response.setContent(content.toString());
             return;
         }
+        Path projectPath = Dynamite.getProjectsPath().resolve(projectParam);
 
         // Get version parameter
         String versionParam = request.getParameter("version");
@@ -66,26 +72,43 @@ public class VerisonCreateServlet implements BiConsumer<HttpRequest, HttpRespons
 
         // Check if version exists
         if (project.get().versions().stream()
-                .anyMatch(version2 -> version2.name().equals(versionParam))) {
-            response.setStatus(200, "OK");
-            return;
-        }
-
-        // Get tags parameter
-        String tagsParam = request.getParameter("tags");
-        if (tagsParam == null) {
-            response.setStatus(400, "Bad Request");
+                .noneMatch(version2 -> version2.name().equals(versionParam))) {
+            response.setStatus(404, "Not Found");
             JsonObject content = new JsonObject();
-            content.addProperty("error", "Parameter 'tags' was not provided");
+            content.addProperty("error", "Version not found");
             response.setContent(content.toString());
             return;
         }
-        List<String> tags = List.of(tagsParam.split(","));
+        Path versionPath = projectPath.resolve(versionParam);
 
-        project.get().versions().add(new Project.Version(versionParam, tags));
-        Dynamite.save();
-        String log = "Created version %s with tags %s for project %s";
-        Dynamite.getLogger().info(log.formatted(versionParam, tags, projectParam));
+        // Get file parameter
+        String fileParam = request.getParameter("file");
+        if (fileParam == null) {
+            response.setStatus(400, "Bad Request");
+            JsonObject content = new JsonObject();
+            content.addProperty("error", "Parameter 'file' was not provided");
+            response.setContent(content.toString());
+            return;
+        }
+
+        try {
+            if (!Files.exists(versionPath)) {
+                Files.createDirectories(versionPath);
+            }
+            Files.write(
+                    versionPath.resolve(fileParam),
+                    request.getContent().getBytes(),
+                    StandardOpenOption.CREATE);
+            String log = "Uploaded file %s for version %s of project %s";
+            Dynamite.getLogger().info(log.formatted(fileParam, versionParam, projectParam));
+        } catch (IOException exception) {
+            Dynamite.getLogger().log(Level.SEVERE, "Failed to write download file", exception);
+            response.setStatus(500, "Internal Server Error");
+            JsonObject content = new JsonObject();
+            content.addProperty("error", "Failed to write file");
+            response.setContent(content.toString());
+            return;
+        }
 
         // Success
         response.setStatus(200, "OK");

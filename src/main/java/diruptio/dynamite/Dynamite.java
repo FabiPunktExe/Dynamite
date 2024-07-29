@@ -2,11 +2,11 @@ package diruptio.dynamite;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import com.google.gson.JsonStreamParser;
 import diruptio.dynamite.project.CreateServlet;
 import diruptio.dynamite.project.version.VerisonCreateServlet;
 import diruptio.dynamite.project.version.VersionDownloadServlet;
+import diruptio.dynamite.project.version.VersionUploadServlet;
 import diruptio.spikedog.Listener;
 import diruptio.spikedog.Module;
 import diruptio.spikedog.Spikedog;
@@ -45,35 +45,48 @@ public class Dynamite implements Listener {
         }
         projectsPath = Path.of(Objects.requireNonNull(config.getString("projects_path")));
 
-        loadProjects(projectsPath);
+        load();
 
         Spikedog.addServlet("/projects", new ProjectsServlet());
         Spikedog.addServlet("/project", new ProjectServlet());
         Spikedog.addServlet("/project/create", new CreateServlet());
         Spikedog.addServlet("/project/version/create", new VerisonCreateServlet());
         Spikedog.addServlet("/project/version/download", new VersionDownloadServlet());
+        Spikedog.addServlet("/project/version/upload", new VersionUploadServlet());
     }
 
-    private void loadProjects(@NotNull Path path) {
+    private void load() {
         try {
             projects.clear();
-            Path projectsFile = path.resolve("projects.json");
+            if (!Files.exists(projectsPath)) {
+                Files.createDirectories(projectsPath);
+            }
+            Path projectsFile = projectsPath.resolve("projects.json");
             if (!Files.exists(projectsFile)) {
                 Files.write(
                         projectsFile,
-                        new JsonObject().toString().getBytes(),
+                        new JsonArray().toString().getBytes(),
                         StandardOpenOption.CREATE_NEW);
-                return;
             }
             BufferedReader reader = Files.newBufferedReader(projectsFile);
             JsonStreamParser parser = new JsonStreamParser(reader);
-            JsonArray json = parser.next().getAsJsonArray();
+            JsonArray projects = parser.next().getAsJsonArray();
             reader.close();
-            for (JsonElement project : json) {
-                if (project.isJsonObject()) {
-                    projects.add(Project.fromJson(project.getAsJsonObject()));
+            for (JsonElement project : projects) {
+                if (project.isJsonPrimitive() && project.getAsJsonPrimitive().isString()) {
+                    Path projectPath = projectsPath.resolve(project.getAsString());
+                    Path projectFile = projectPath.resolve("project.json");
+                    reader = Files.newBufferedReader(projectFile);
+                    parser = new JsonStreamParser(reader);
+                    JsonElement json = parser.next();
+                    reader.close();
+                    if (json.isJsonObject()) {
+                        Dynamite.projects.add(Project.fromJson(json.getAsJsonObject()));
+                    } else {
+                        logger.warning("Invalid project: " + project);
+                    }
                 } else {
-                    logger.warning("Invalid project: " + project);
+                    logger.warning("Invalid project name: " + project);
                 }
             }
         } catch (IOException exception) {
@@ -117,8 +130,10 @@ public class Dynamite implements Listener {
     public static void save() {
         try {
             Path projectsFile = projectsPath.resolve("projects.json");
+            JsonArray projects = new JsonArray();
+            Dynamite.projects.forEach(project -> projects.add(project.name()));
             Files.write(projectsFile, projects.toString().getBytes(), StandardOpenOption.CREATE);
-            for (Project project : projects) {
+            for (Project project : Dynamite.projects) {
                 Path projectPath = projectsPath.resolve(project.name());
                 if (!Files.exists(projectPath)) {
                     Files.createDirectories(projectPath);
