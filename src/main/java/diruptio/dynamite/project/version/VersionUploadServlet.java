@@ -36,7 +36,6 @@ public class VersionUploadServlet implements BiConsumer<HttpRequest, HttpRespons
         }
 
         // Get project parameter
-        System.out.println(request.getParameters());
         String projectParam = request.getParameter("project");
         if (projectParam == null) {
             response.setStatus(400, "Bad Request");
