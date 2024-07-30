@@ -4,16 +4,25 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.function.Predicate;
 import org.jetbrains.annotations.NotNull;
 
 public record Project(@NotNull String name, @NotNull List<Version> versions) {
     public @NotNull JsonObject toJson() {
+        return toJson(version -> true);
+    }
+
+    public @NotNull JsonObject toJson(Predicate<Version> filter) {
         JsonObject json = new JsonObject();
         json.addProperty("name", name);
+        versions.sort(Comparator.comparing(Version::name));
         JsonArray versions = new JsonArray();
         for (Version version : this.versions) {
-            versions.add(version.toJson());
+            if (filter.test(version)) {
+                versions.add(version.toJson());
+            }
         }
         json.add("versions", versions);
         return json;

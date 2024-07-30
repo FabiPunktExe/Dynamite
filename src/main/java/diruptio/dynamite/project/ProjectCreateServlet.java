@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.function.BiConsumer;
 
-public class CreateServlet implements BiConsumer<HttpRequest, HttpResponse> {
+public class ProjectCreateServlet implements BiConsumer<HttpRequest, HttpResponse> {
     public void accept(HttpRequest request, HttpResponse response) {
         response.setHeader("Content-Type", "application/json");
 

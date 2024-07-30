@@ -3,7 +3,7 @@ package diruptio.dynamite;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonStreamParser;
-import diruptio.dynamite.project.CreateServlet;
+import diruptio.dynamite.project.ProjectCreateServlet;
 import diruptio.dynamite.project.version.VerisonCreateServlet;
 import diruptio.dynamite.project.version.VersionDownloadServlet;
 import diruptio.dynamite.project.version.VersionUploadServlet;
@@ -51,7 +51,7 @@ public class Dynamite implements Listener {
 
         Spikedog.addServlet("/projects", new ProjectsServlet());
         Spikedog.addServlet("/project", new ProjectServlet());
-        Spikedog.addServlet("/project/create", new CreateServlet());
+        Spikedog.addServlet("/project/create", new ProjectCreateServlet());
         Spikedog.addServlet("/project/version/create", new VerisonCreateServlet());
         Spikedog.addServlet("/project/version/download", new VersionDownloadServlet());
         Spikedog.addServlet("/project/version/upload", new VersionUploadServlet());
