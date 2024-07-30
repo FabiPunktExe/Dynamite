@@ -33,6 +33,8 @@ public class Dynamite implements Listener {
 
     @Override
     public void onLoad(@NotNull Module self) {
+        logger.setParent(Spikedog.LOGGER);
+
         Path configFile = self.file().resolveSibling("Dynamite").resolve("config.yml");
         config = new Config(configFile, Config.Type.YAML);
         if (!config.contains("password")) {
