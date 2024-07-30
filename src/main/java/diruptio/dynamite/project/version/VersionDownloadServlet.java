@@ -29,10 +29,9 @@ public class VersionDownloadServlet implements BiConsumer<HttpRequest, HttpRespo
         }
 
         // Check if project exists
-        Optional<Project> project =
-                Dynamite.getProjects().stream()
-                        .filter(project2 -> project2.name().equals(projectParam))
-                        .findFirst();
+        Optional<Project> project = Dynamite.getProjects().stream()
+                .filter(project2 -> project2.name().equals(projectParam))
+                .findFirst();
         if (project.isEmpty()) {
             response.setStatus(404, "Not Found");
             JsonObject content = new JsonObject();
@@ -54,10 +53,9 @@ public class VersionDownloadServlet implements BiConsumer<HttpRequest, HttpRespo
         Path versionPath = projectPath.resolve(versionParam);
 
         // Check if version exists
-        Optional<Project.Version> version =
-                project.get().versions().stream()
-                        .filter(version2 -> version2.name().equals(versionParam))
-                        .findFirst();
+        Optional<Project.Version> version = project.get().versions().stream()
+                .filter(version2 -> version2.name().equals(versionParam))
+                .findFirst();
         if (version.isEmpty()) {
             response.setStatus(404, "Not Found");
             JsonObject content = new JsonObject();
@@ -90,9 +88,7 @@ public class VersionDownloadServlet implements BiConsumer<HttpRequest, HttpRespo
             if (download == null) {
                 response.setStatus(400, "Bad Request");
                 JsonObject content = new JsonObject();
-                content.addProperty(
-                        "error",
-                        "Multiple downloads found and no parameter 'download' was not provided");
+                content.addProperty("error", "Multiple downloads found and no parameter 'download' was not provided");
                 JsonArray downloadsJson = new JsonArray();
                 downloads.forEach(downloadsJson::add);
                 content.add("downloads", downloadsJson);

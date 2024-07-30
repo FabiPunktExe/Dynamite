@@ -46,10 +46,9 @@ public class VersionUploadServlet implements BiConsumer<HttpRequest, HttpRespons
         }
 
         // Check if project exists
-        Optional<Project> project =
-                Dynamite.getProjects().stream()
-                        .filter(project2 -> project2.name().equals(projectParam))
-                        .findFirst();
+        Optional<Project> project = Dynamite.getProjects().stream()
+                .filter(project2 -> project2.name().equals(projectParam))
+                .findFirst();
         if (project.isEmpty()) {
             response.setStatus(404, "Not Found");
             JsonObject content = new JsonObject();
@@ -94,10 +93,7 @@ public class VersionUploadServlet implements BiConsumer<HttpRequest, HttpRespons
             if (!Files.exists(versionPath)) {
                 Files.createDirectories(versionPath);
             }
-            Files.write(
-                    versionPath.resolve(fileParam),
-                    request.getContent().getBytes(),
-                    StandardOpenOption.CREATE);
+            Files.write(versionPath.resolve(fileParam), request.getContent().getBytes(), StandardOpenOption.CREATE);
             String log = "Uploaded file %s for version %s of project %s";
             Dynamite.getLogger().info(log.formatted(fileParam, versionParam, projectParam));
         } catch (IOException exception) {

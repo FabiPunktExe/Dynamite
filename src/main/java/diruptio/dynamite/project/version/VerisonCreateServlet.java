@@ -43,10 +43,9 @@ public class VerisonCreateServlet implements BiConsumer<HttpRequest, HttpRespons
         }
 
         // Check if project exists
-        Optional<Project> project =
-                Dynamite.getProjects().stream()
-                        .filter(project2 -> project2.name().equals(projectParam))
-                        .findFirst();
+        Optional<Project> project = Dynamite.getProjects().stream()
+                .filter(project2 -> project2.name().equals(projectParam))
+                .findFirst();
         if (project.isEmpty()) {
             response.setStatus(404, "Not Found");
             JsonObject content = new JsonObject();

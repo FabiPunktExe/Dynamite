@@ -25,7 +25,7 @@ spotless {
     }
     java {
         target("**/src/**/*.java")
-        googleJavaFormat().aosp()
+        palantirJavaFormat("2.48.0").formatJavadoc(true)
         removeUnusedImports()
         indentWithSpaces()
         endWithNewline()

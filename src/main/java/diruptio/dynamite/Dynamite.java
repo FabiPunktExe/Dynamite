@@ -65,10 +65,7 @@ public class Dynamite implements Listener {
             }
             Path projectsFile = projectsPath.resolve("projects.json");
             if (!Files.exists(projectsFile)) {
-                Files.write(
-                        projectsFile,
-                        new JsonArray().toString().getBytes(),
-                        StandardOpenOption.CREATE_NEW);
+                Files.write(projectsFile, new JsonArray().toString().getBytes(), StandardOpenOption.CREATE_NEW);
             }
             BufferedReader reader = Files.newBufferedReader(projectsFile);
             JsonStreamParser parser = new JsonStreamParser(reader);
@@ -112,8 +109,7 @@ public class Dynamite implements Listener {
         return projects;
     }
 
-    public static @Nullable List<String> getDownloads(
-            @NotNull String project, @NotNull String version) {
+    public static @Nullable List<String> getDownloads(@NotNull String project, @NotNull String version) {
         try (Stream<Path> children =
                 Files.list(Dynamite.getProjectsPath().resolve(project).resolve(version))) {
             List<String> downloads = new ArrayList<>();
@@ -141,10 +137,7 @@ public class Dynamite implements Listener {
                     Files.createDirectories(projectPath);
                 }
                 Path projectFile = projectPath.resolve("project.json");
-                Files.write(
-                        projectFile,
-                        project.toJson().toString().getBytes(),
-                        StandardOpenOption.CREATE);
+                Files.write(projectFile, project.toJson().toString().getBytes(), StandardOpenOption.CREATE);
             }
         } catch (IOException exception) {
             exception.printStackTrace(System.err);

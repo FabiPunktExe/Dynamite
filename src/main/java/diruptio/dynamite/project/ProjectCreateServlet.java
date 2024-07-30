@@ -40,8 +40,7 @@ public class ProjectCreateServlet implements BiConsumer<HttpRequest, HttpRespons
         }
 
         // Check if project exists
-        if (Dynamite.getProjects().stream()
-                .anyMatch(project2 -> project2.name().equals(projectParam))) {
+        if (Dynamite.getProjects().stream().anyMatch(project2 -> project2.name().equals(projectParam))) {
             JsonObject content = new JsonObject();
             content.addProperty("comment", "Project already exists");
             response.setContent(content.toString());
