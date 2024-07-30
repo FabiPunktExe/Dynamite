@@ -6,6 +6,7 @@ import diruptio.dynamite.Project;
 import diruptio.spikedog.HttpRequest;
 import diruptio.spikedog.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
@@ -80,7 +81,7 @@ public class VerisonCreateServlet implements BiConsumer<HttpRequest, HttpRespons
             response.setContent(content.toString());
             return;
         }
-        List<String> tags = List.of(tagsParam.split(","));
+        List<String> tags = tagsParam.isBlank() ? new ArrayList<>() : List.of(tagsParam.split(","));
 
         project.get().versions().add(new Project.Version(versionParam, tags));
         Dynamite.save();
